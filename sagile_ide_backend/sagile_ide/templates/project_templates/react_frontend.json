@@ -1,0 +1,74 @@
+{
+  "name": "React Frontend",
+  "description": "A modern React.js frontend application with essential dependencies and folder structure",
+  "category": "frontend",
+  "framework": "react",
+  "files": [
+    {
+      "file_path": "package.json",
+      "file_name": "package.json",
+      "file_type": "config",
+      "content": "{\n  \"name\": \"{{project_name}}\",\n  \"version\": \"0.1.0\",\n  \"private\": true,\n  \"dependencies\": {\n    \"@testing-library/jest-dom\": \"^5.16.4\",\n    \"@testing-library/react\": \"^13.3.0\",\n    \"@testing-library/user-event\": \"^13.5.0\",\n    \"react\": \"^18.2.0\",\n    \"react-dom\": \"^18.2.0\",\n    \"react-router-dom\": \"^6.3.0\",\n    \"react-scripts\": \"5.0.1\",\n    \"web-vitals\": \"^2.1.4\"\n  },\n  \"scripts\": {\n    \"start\": \"react-scripts start\",\n    \"build\": \"react-scripts build\",\n    \"test\": \"react-scripts test\",\n    \"eject\": \"react-scripts eject\"\n  },\n  \"eslintConfig\": {\n    \"extends\": [\n      \"react-app\",\n      \"react-app/jest\"\n    ]\n  },\n  \"browserslist\": {\n    \"production\": [\n      \">0.2%\",\n      \"not dead\",\n      \"not op_mini all\"\n    ],\n    \"development\": [\n      \"last 1 chrome version\",\n      \"last 1 firefox version\",\n      \"last 1 safari version\"\n    ]\n  }\n}"
+    },
+    {
+      "file_path": "public/index.html",
+      "file_name": "index.html",
+      "file_type": "code",
+      "content": "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <link rel=\"icon\" href=\"%PUBLIC_URL%/favicon.ico\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <meta name=\"theme-color\" content=\"#000000\" />\n    <meta name=\"description\" content=\"{{project_description}}\" />\n    <title>{{project_name}}</title>\n  </head>\n  <body>\n    <noscript>You need to enable JavaScript to run this app.</noscript>\n    <div id=\"root\"></div>\n  </body>\n</html>"
+    },
+    {
+      "file_path": "src/index.js",
+      "file_name": "index.js",
+      "file_type": "code",
+      "content": "import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport './index.css';\nimport App from './App';\nimport reportWebVitals from './reportWebVitals';\n\nconst root = ReactDOM.createRoot(document.getElementById('root'));\nroot.render(\n  <React.StrictMode>\n    <App />\n  </React.StrictMode>\n);\n\n// If you want to start measuring performance in your app, pass a function\n// to log results (for example: reportWebVitals(console.log))\n// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals\nreportWebVitals();"
+    },
+    {
+      "file_path": "src/App.js",
+      "file_name": "App.js",
+      "file_type": "code",
+      "content": "import React from 'react';\nimport { BrowserRouter as Router, Routes, Route } from 'react-router-dom';\nimport './App.css';\nimport Home from './components/Home';\nimport About from './components/About';\n\nfunction App() {\n  return (\n    <Router>\n      <div className=\"App\">\n        <header className=\"App-header\">\n          <h1>{{project_name}}</h1>\n          <nav>\n            <a href=\"/\">Home</a>\n            <a href=\"/about\">About</a>\n          </nav>\n        </header>\n        <main>\n          <Routes>\n            <Route path=\"/\" element={<Home />} />\n            <Route path=\"/about\" element={<About />} />\n          </Routes>\n        </main>\n      </div>\n    </Router>\n  );\n}\n\nexport default App;"
+    },
+    {
+      "file_path": "src/App.css",
+      "file_name": "App.css",
+      "file_type": "code",
+      "content": ".App {\n  text-align: center;\n}\n\n.App-header {\n  background-color: #282c34;\n  padding: 20px;\n  color: white;\n}\n\n.App-header h1 {\n  margin: 0 0 20px 0;\n}\n\n.App-header nav a {\n  color: #61dafb;\n  margin: 0 15px;\n  text-decoration: none;\n}\n\n.App-header nav a:hover {\n  text-decoration: underline;\n}\n\nmain {\n  padding: 20px;\n}\n\n.component {\n  max-width: 800px;\n  margin: 0 auto;\n  padding: 20px;\n  background-color: #f5f5f5;\n  border-radius: 8px;\n  margin-bottom: 20px;\n}\n\n.component h2 {\n  color: #282c34;\n  margin-bottom: 15px;\n}\n\n.component p {\n  line-height: 1.6;\n  color: #666;\n}"
+    },
+    {
+      "file_path": "src/index.css",
+      "file_name": "index.css",
+      "file_type": "code",
+      "content": "body {\n  margin: 0;\n  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',\n    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',\n    sans-serif;\n  -webkit-font-smoothing: antialiased;\n  -moz-osx-font-smoothing: grayscale;\n}\n\ncode {\n  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',\n    monospace;\n}\n\n* {\n  box-sizing: border-box;\n}"
+    },
+    {
+      "file_path": "src/components/Home.js",
+      "file_name": "Home.js",
+      "file_type": "code",
+      "content": "import React from 'react';\n\nfunction Home() {\n  return (\n    <div className=\"component\">\n      <h2>Welcome to {{project_name}}</h2>\n      <p>\n        This is a React frontend application created with SAgile IDE.\n        Start building your amazing application here!\n      </p>\n      <p>\n        Features included:\n      </p>\n      <ul style={{ textAlign: 'left', maxWidth: '400px', margin: '0 auto' }}>\n        <li>React Router for navigation</li>\n        <li>Modern CSS styling</li>\n        <li>Component-based architecture</li>\n        <li>Testing setup with Jest</li>\n        <li>Production build configuration</li>\n      </ul>\n    </div>\n  );\n}\n\nexport default Home;"
+    },
+    {
+      "file_path": "src/components/About.js",
+      "file_name": "About.js",
+      "file_type": "code",
+      "content": "import React from 'react';\n\nfunction About() {\n  return (\n    <div className=\"component\">\n      <h2>About {{project_name}}</h2>\n      <p>\n        This project was created using SAgile IDE's React template.\n        It provides a solid foundation for building modern web applications.\n      </p>\n      <p>\n        {{project_description}}\n      </p>\n      <div style={{ marginTop: '20px' }}>\n        <h3>Next Steps:</h3>\n        <ol style={{ textAlign: 'left', maxWidth: '500px', margin: '0 auto' }}>\n          <li>Run <code>npm install</code> to install dependencies</li>\n          <li>Run <code>npm start</code> to start the development server</li>\n          <li>Edit components in the <code>src/components</code> directory</li>\n          <li>Add your own routes and functionality</li>\n        </ol>\n      </div>\n    </div>\n  );\n}\n\nexport default About;"
+    },
+    {
+      "file_path": "src/reportWebVitals.js",
+      "file_name": "reportWebVitals.js",
+      "file_type": "code",
+      "content": "const reportWebVitals = onPerfEntry => {\n  if (onPerfEntry && onPerfEntry instanceof Function) {\n    import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {\n      getCLS(onPerfEntry);\n      getFID(onPerfEntry);\n      getFCP(onPerfEntry);\n      getLCP(onPerfEntry);\n      getTTFB(onPerfEntry);\n    });\n  }\n};\n\nexport default reportWebVitals;"
+    },
+    {
+      "file_path": "README.md",
+      "file_name": "README.md",
+      "file_type": "documentation",
+      "content": "# {{project_name}}\n\n{{project_description}}\n\n## Getting Started\n\nThis project was created with SAgile IDE using the React template.\n\n### Prerequisites\n\n- Node.js (version 14 or higher)\n- npm or yarn\n\n### Installation\n\n1. Clone this repository\n2. Install dependencies:\n   ```bash\n   npm install\n   ```\n\n### Available Scripts\n\nIn the project directory, you can run:\n\n#### `npm start`\n\nRuns the app in development mode.\nOpen [http://localhost:3000](http://localhost:3000) to view it in your browser.\n\n#### `npm test`\n\nLaunches the test runner in interactive watch mode.\n\n#### `npm run build`\n\nBuilds the app for production to the `build` folder.\n\n## Project Structure\n\n```\nsrc/\n├── components/          # React components\n│   ├── Home.js\n│   └── About.js\n├── App.js              # Main App component\n├── App.css             # App styles\n├── index.js            # Entry point\n└── index.css           # Global styles\n```\n\n## Learn More\n\n- [React Documentation](https://reactjs.org/)\n- [Create React App Documentation](https://facebook.github.io/create-react-app/docs/getting-started)\n- [React Router Documentation](https://reactrouter.com/)\n\n## Contributing\n\n1. Fork the project\n2. Create your feature branch (`git checkout -b feature/AmazingFeature`)\n3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)\n4. Push to the branch (`git push origin feature/AmazingFeature`)\n5. Open a Pull Request\n\n## License\n\nThis project is licensed under the MIT License."
+    },
+    {
+      "file_path": ".gitignore",
+      "file_name": ".gitignore",
+      "file_type": "config",
+      "content": "# Dependencies\nnode_modules/\n/.pnp\n.pnp.js\n\n# Testing\n/coverage\n\n# Production\n/build\n\n# Environment variables\n.env.local\n.env.development.local\n.env.test.local\n.env.production.local\n\n# Logs\nnpm-debug.log*\nyarn-debug.log*\nyarn-error.log*\nlerna-debug.log*\n\n# Runtime data\npids\n*.pid\n*.seed\n*.pid.lock\n\n# IDE\n.vscode/\n.idea/\n*.swp\n*.swo\n*~\n\n# OS\n.DS_Store\n.DS_Store?\n._*\n.Spotlight-V100\n.Trashes\nehthumbs.db\nThumbs.db"
+    }
+  ]
+}

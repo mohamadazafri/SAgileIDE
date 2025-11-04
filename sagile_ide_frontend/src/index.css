@@ -1,0 +1,30 @@
+/* SAgileIDE Global Styles */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #1a1a1a;
+  color: #cccccc;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  width: 100vw;
+}
+
+/* IDE Workspace - No scrolling */
+.ide-workspace {
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Repository Creation - Allow scrolling */
+.repository-creation-page {
+  overflow-y: auto;
+  min-height: 100vh;
+}
+
+code {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
