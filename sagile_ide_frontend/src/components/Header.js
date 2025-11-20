@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
+import SettingsModal from './SettingsModal';
 
 const Header = ({ currentRepository, allRepositories = [], onRepositoryChange }) => {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const [showRepositoryDropdown, setShowRepositoryDropdown] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  
   const handleSaveChanges = () => {
     // TODO: Implement save functionality
     console.log('Saving changes...');
@@ -29,7 +34,7 @@ const Header = ({ currentRepository, allRepositories = [], onRepositoryChange })
         <i className="fas fa-code"></i>
         <span>SAgileIDE</span>
       </div>
-
+      
       {/* Breadcrumb Navigation */}
       <div className="breadcrumb-nav">
         <button 
@@ -100,6 +105,24 @@ const Header = ({ currentRepository, allRepositories = [], onRepositoryChange })
       )}
       
       <div className="header-actions">
+        {/* Settings Button */}
+        <button 
+          className="btn btn-outline" 
+          onClick={() => setShowSettingsModal(true)}
+          title="Editor Settings"
+        >
+          <i className="fas fa-cog"></i>
+        </button>
+
+        {/* Theme Toggle Button */}
+        <button 
+          className="btn btn-outline" 
+          onClick={toggleTheme}
+          title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Theme`}
+        >
+          <i className={`fas fa-${theme === 'dark' ? 'sun' : 'moon'}`}></i>
+        </button>
+
         {/* Header Navigation Button */}
         <button 
           className="btn btn-outline"
@@ -126,6 +149,12 @@ const Header = ({ currentRepository, allRepositories = [], onRepositoryChange })
           <i className="fas fa-chevron-down"></i>
         </div>
       </div>
+      
+      {/* Settings Modal */}
+      <SettingsModal 
+        isOpen={showSettingsModal} 
+        onClose={() => setShowSettingsModal(false)} 
+      />
     </header>
   );
 };

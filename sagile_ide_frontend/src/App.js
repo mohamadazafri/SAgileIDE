@@ -13,6 +13,8 @@ import RightPanel from './components/RightPanel';
 import StatusBar from './components/StatusBar';
 import { apiUtils, repositoriesAPI } from './services/api';
 import { useLocation } from 'react-router-dom';
+import { ThemeProvider } from './context/ThemeContext';
+import { SettingsProvider } from './context/SettingsContext';
 
 // IDE Workspace Component
 const IDEWorkspace = () => {
@@ -165,36 +167,40 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   return (
+    <ThemeProvider>
+      <SettingsProvider>
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/repositories" replace />} />
-        <Route path="/login" element={<Login />} />
-        <Route 
-          path="/repositories" 
-          element={
-            <ProtectedRoute>
-              <RepositoryDashboard />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/create-repository" 
-          element={
-            <ProtectedRoute>
-              <RepositoryCreationPage />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/workspace" 
-          element={
-            <ProtectedRoute>
-              <IDEWorkspace />
-            </ProtectedRoute>
-          } 
-        />
+            <Route path="/" element={<Navigate to="/repositories" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route 
+              path="/repositories" 
+              element={
+                <ProtectedRoute>
+                  <RepositoryDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/create-repository" 
+              element={
+                <ProtectedRoute>
+                  <RepositoryCreationPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/workspace" 
+              element={
+                <ProtectedRoute>
+                  <IDEWorkspace />
+                </ProtectedRoute>
+              } 
+            />
       </Routes>
     </Router>
+      </SettingsProvider>
+    </ThemeProvider>
   );
 }
 

@@ -8,7 +8,7 @@
 }
 
 :root {
-    /* Night Theme Color Palette */
+    /* Night Theme Color Palette (Default) */
     --bg-primary: #1a1a1a;
     --bg-secondary: #252526;
     --bg-tertiary: #2d2d30;
@@ -17,6 +17,9 @@
     --text-primary: #cccccc;
     --text-secondary: #969696;
     --text-accent: #569cd6;
+    --text-muted: #6a6a6a;
+    
+    /* Status Colors */
     --highlight: #007acc;
     --success: #4ec9b0;
     --warning: #dcdcaa;
@@ -25,14 +28,80 @@
     --purple: #c586c0;
     --orange: #ce9178;
     --green: #608b4e;
+    
+    /* Button Colors */
+    --primary: #007acc;
+    --primary-dark: #005a9e;
+    --primary-bg: rgba(0, 122, 204, 0.2);
+    --error-bg: rgba(244, 71, 71, 0.1);
+    
+    /* Search Highlight Colors (Dark) */
+    --search-match-bg: rgba(97, 66, 32, 0.6);
+    --search-match-border: rgba(246, 178, 107, 0.4);
+    --search-match-current-bg: rgba(158, 112, 0, 0.7);
+    --search-match-current-border: rgba(246, 178, 107, 0.8);
+    
+    /* Syntax Highlighting (Dark) */
+    --token-comment: #6a9955;
+    --token-punctuation: #cccccc;
+    --token-property: #9cdcfe;
+    --token-keyword: #569cd6;
+    --token-string: #ce9178;
+    --token-number: #b5cea8;
+    --token-operator: #d4d4d4;
+}
+
+/* Light Theme Variables */
+[data-theme='light'] {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f3f3f3;
+    --bg-tertiary: #e1e4e8;
+    --bg-accent: #d1d5da;
+    --border-color: #e1e4e8;
+    --text-primary: #24292e;
+    --text-secondary: #586069;
+    --text-accent: #0366d6;
+    --text-muted: #6a737d;
+    
+    /* Keep status colors similar but slightly adjusted for contrast if needed */
+    --highlight: #0366d6;
+    --success: #22863a;
+    --warning: #b08800;
+    --error: #cb2431;
+    --info: #005cc5;
+    --purple: #6f42c1;
+    --orange: #e36209;
+    --green: #28a745;
+    
+    --primary: #0366d6;
+    --primary-dark: #005cc5;
+    --primary-bg: rgba(3, 102, 214, 0.1);
+    --error-bg: rgba(203, 36, 49, 0.1);
+    
+    /* Search Highlight Colors (Light) */
+    --search-match-bg: rgba(255, 213, 79, 0.5);
+    --search-match-border: rgba(240, 180, 41, 0.5);
+    --search-match-current-bg: rgba(255, 171, 0, 0.6);
+    --search-match-current-border: rgba(255, 143, 0, 0.8);
+    
+    /* Syntax Highlighting (Light - GitHub-like) */
+    --token-comment: #6a737d;
+    --token-punctuation: #24292e;
+    --token-property: #005cc5;
+    --token-keyword: #d73a49;
+    --token-string: #032f62;
+    --token-number: #005cc5;
+    --token-operator: #d73a49;
 }
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: var(--bg-primary);
     color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* ... rest of the CSS remains mostly the same, utilizing the variables ... */
 /* Header */
 .header {
     height: 60px;
@@ -383,7 +452,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100%;
+    flex: 1; /* Take remaining space in flex container */
     background-color: var(--bg-primary);
 }
 
@@ -418,6 +487,7 @@ body {
     border-bottom: 1px solid var(--border-color);
     overflow-x: auto;
     min-height: 40px;
+    flex-shrink: 0; /* Don't shrink when space is limited */
 }
 
 .tab {
@@ -500,6 +570,7 @@ body {
     background-color: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
     font-size: 13px;
+    flex-shrink: 0; /* Don't shrink when space is limited */
 }
 
 .file-path {
@@ -550,7 +621,7 @@ body {
     resize: none;
     width: 100%;
     height: calc(100% - 40px);
-    padding: 16px;
+    padding: 0px;
     tab-size: 2;
 }
 
@@ -558,7 +629,6 @@ body {
     opacity: 0.6;
     cursor: not-allowed;
 }
-
 .editor-loading {
     display: flex;
     flex-direction: column;
@@ -583,24 +653,26 @@ body {
 .code-editor-container {
     position: relative;
     width: 100%;
-    height: 100%;
+    flex: 1; /* Take remaining space */
+    min-height: 0; /* Important: allows flex child to shrink below content size */
     font-family: 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
     font-size: 14px;
     line-height: 1.5;
     display: flex;
+    overflow: hidden; /* Constrain children */
 }
 
 .line-numbers {
     position: relative;
     width: 50px;
-    background: var(--sidebar-bg);
+    background: var(--bg-secondary);
     border-right: 1px solid var(--border-color);
     padding: 16px 8px 16px 0;
     text-align: right;
     color: var(--text-secondary);
     font-size: 12px;
     line-height: 1.5;
-    overflow: hidden;
+    overflow: hidden; /* No scrollbar - syncs via JS */
     user-select: none;
     flex-shrink: 0;
     z-index: 3;
@@ -623,23 +695,24 @@ body {
 .code-content-area {
     position: relative;
     flex: 1;
-    overflow: hidden;
+    min-height: 0; /* Important: allows flex child to shrink */
+    overflow: hidden; /* Container manages scroll through textarea */
 }
 
 .code-highlight-overlay {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    right: 0;
+    bottom: 0;
     margin: 0;
     padding: 16px;
     border: none;
     background: transparent;
-    color: #ccc;
+    color: var(--text-primary);
     white-space: pre-wrap;
     word-wrap: break-word;
-    overflow: hidden;
+    overflow: hidden; /* Sync with textarea scroll, don't scroll independently */
     pointer-events: none;
     z-index: 1;
     tab-size: 2;
@@ -649,8 +722,8 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    right: 0;
+    bottom: 0;
     margin: 0;
     padding: 16px;
     border: none;
@@ -663,6 +736,8 @@ body {
     word-wrap: break-word;
     resize: none;
     outline: none;
+    overflow-y: scroll; /* Enable vertical scrolling */
+    overflow-x: auto; /* Enable horizontal scrolling if needed */
     z-index: 2;
     tab-size: 2;
     caret-color: var(--text-primary);
@@ -671,19 +746,221 @@ body {
 }
 
 .code-editor-textarea::selection {
-    background: rgba(100, 150, 255, 0.3);
+    background: var(--primary-bg); /* Use themed selection */
     color: transparent;
 }
 
 .code-editor-textarea::-moz-selection {
-    background: rgba(100, 150, 255, 0.3);
+    background: var(--primary-bg);
     color: transparent;
 }
 
-/* Override Prism theme colors for dark mode */
+/* Search & Replace Styles */
+.search-widget {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    width: 320px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.search-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.search-input-wrapper {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.search-input {
+    width: 100%;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    padding-right: 60px; /* Space for count */
+    font-size: 12px;
+    border-radius: 2px;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--highlight);
+}
+
+.match-count {
+    position: absolute;
+    right: 6px;
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+.search-actions {
+    display: flex;
+    gap: 2px;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.icon-btn:hover {
+    background-color: var(--bg-accent);
+    color: var(--text-primary);
+}
+
+.icon-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.replace-btn {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 2px 8px;
+    font-size: 11px;
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.replace-btn:hover {
+    background-color: var(--bg-accent);
+}
+
+.search-highlight-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 16px;
+    border: none;
+    background: transparent;
+    color: transparent;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow: hidden; /* Sync with textarea, don't scroll independently */
+    pointer-events: none;
+    z-index: 0; /* Behind Prism overlay */
+    tab-size: 2;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+}
+
+.search-match {
+    background-color: var(--search-match-bg);
+    border: 1px solid var(--search-match-border);
+    border-radius: 2px;
+}
+
+.search-match.current {
+    background-color: var(--search-match-current-bg);
+    border: 1px solid var(--search-match-current-border);
+}
+
+/* Go To Line Widget */
+.goto-line-widget {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    z-index: 100;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.goto-line-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.icon-btn-small {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+}
+
+.icon-btn-small:hover {
+    color: var(--text-primary);
+}
+
+.goto-line-body {
+    display: flex;
+    gap: 8px;
+}
+
+.goto-line-input {
+    flex: 1;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 6px 10px;
+    font-size: 13px;
+    border-radius: 3px;
+}
+
+.goto-line-input:focus {
+    outline: none;
+    border-color: var(--highlight);
+}
+
+.btn-goto {
+    background-color: var(--highlight);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.btn-goto:hover {
+    background-color: var(--highlight);
+    opacity: 0.9;
+}
+
+/* Override Prism theme colors for dynamic theming */
 .code-highlight-overlay code[class*="language-"],
 .code-highlight-overlay pre[class*="language-"] {
-    color: #ccc;
+    color: var(--text-primary);
     background: none;
     text-shadow: none;
     font-family: inherit;
@@ -699,16 +976,16 @@ body {
     hyphens: none;
 }
 
-/* Token colors for dark theme */
+/* Token colors for theming */
 .token.comment,
 .token.prolog,
 .token.doctype,
 .token.cdata {
-    color: #7C7C7C;
+    color: var(--token-comment);
 }
 
 .token.punctuation {
-    color: #ccc;
+    color: var(--token-punctuation);
 }
 
 .token.property,
@@ -716,12 +993,12 @@ body {
 .token.constant,
 .token.symbol,
 .token.deleted {
-    color: #f92672;
+    color: var(--token-keyword); /* using keyword color for similar emphasis */
 }
 
 .token.boolean,
 .token.number {
-    color: #ae81ff;
+    color: var(--token-number);
 }
 
 .token.selector,
@@ -730,7 +1007,7 @@ body {
 .token.char,
 .token.builtin,
 .token.inserted {
-    color: #a6e22e;
+    color: var(--token-string);
 }
 
 .token.operator,
@@ -739,23 +1016,23 @@ body {
 .language-css .token.string,
 .style .token.string,
 .token.variable {
-    color: #f8f8f2;
+    color: var(--token-operator);
 }
 
 .token.atrule,
 .token.attr-value,
 .token.function,
 .token.class-name {
-    color: #e6db74;
+    color: var(--token-string); /* fallback or specific color */
 }
 
 .token.keyword {
-    color: #66d9ef;
+    color: var(--token-keyword);
 }
 
 .token.regex,
 .token.important {
-    color: #fd971f;
+    color: var(--token-number); /* fallback */
 }
 
 .token.important,
@@ -773,7 +1050,6 @@ body {
 
 /* Syntax highlighting placeholder styles */
 .code-editor {
-    /* These would be enhanced with a proper syntax highlighter */
     white-space: pre;
     word-wrap: break-word;
 }
@@ -1128,6 +1404,41 @@ body {
     margin-left: auto;
 }
 
+/* Git Status Indicators */
+.git-status-indicator {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 4px;
+    border-radius: 2px;
+    font-family: monospace;
+}
+
+.file-item.git-modified .git-status-indicator {
+    color: var(--warning);
+    background-color: rgba(220, 220, 170, 0.2);
+}
+
+.file-item.git-added .git-status-indicator {
+    color: var(--success);
+    background-color: rgba(76, 201, 176, 0.2);
+}
+
+.file-item.git-deleted .git-status-indicator {
+    color: var(--error);
+    background-color: rgba(244, 71, 71, 0.2);
+}
+
+.file-item.git-renamed .git-status-indicator {
+    color: var(--info);
+    background-color: rgba(156, 220, 254, 0.2);
+}
+
+.file-item.git-untracked .git-status-indicator {
+    color: var(--purple);
+    background-color: rgba(197, 134, 192, 0.2);
+}
+
 .file-item i {
     margin-right: 8px;
     width: 16px;
@@ -1368,72 +1679,14 @@ body {
     flex-direction: column;
 }
 
-/* Tab Bar */
-.tab-bar {
-    height: 35px;
-    background-color: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    align-items: center;
-    overflow-x: auto;
-}
-
-.tab {
-    height: 100%;
-    min-width: 120px;
-    display: flex;
-    align-items: center;
-    padding: 0 15px;
-    border-right: 1px solid var(--border-color);
-    cursor: pointer;
-    font-size: 13px;
-    position: relative;
-}
-
-.tab.active {
-    background-color: var(--bg-primary);
-    border-bottom: 2px solid var(--highlight);
-}
-
-.tab:hover {
-    background-color: var(--bg-accent);
-}
-
-.tab.modified::before {
-    content: '●';
-    color: var(--warning);
-    margin-right: 5px;
-}
-
-.tab-close {
-    margin-left: 8px;
-    opacity: 0.7;
-}
-
-.tab-close:hover {
-    opacity: 1;
-}
-
 /* Editor */
 .editor {
     flex: 1;
     background-color: var(--bg-primary);
     position: relative;
-}
-
-.code-editor {
-    width: 100%;
-    height: 100%;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 14px;
-    line-height: 1.5;
-    padding: 20px;
-    border: none;
-    outline: none;
-    resize: none;
-    tab-size: 4;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Prevent infinite expansion */
 }
 
 /* User Presence Indicators */
@@ -1753,7 +2006,6 @@ body {
     animation: success-flash 0.6s ease-in-out;
 }
 
-
 /* Loading Screen */
 .loading-screen {
   min-height: 100vh;
@@ -1777,4 +2029,552 @@ body {
 .loading-spinner p {
   font-size: 1.2rem;
   font-weight: 500;
+}
+
+/* Settings Modal Styles */
+.settings-modal {
+  width: 600px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.setting-group {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.setting-group:last-child {
+  border-bottom: none;
+}
+
+.setting-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.setting-label i {
+  color: var(--highlight);
+  font-size: 18px;
+}
+
+.setting-control {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.setting-slider {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bg-accent);
+  border-radius: 3px;
+  outline: none;
+}
+
+.setting-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--highlight);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.setting-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px rgba(0, 122, 204, 0.2);
+}
+
+.setting-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--highlight);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.setting-slider::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px rgba(0, 122, 204, 0.2);
+}
+
+.setting-value {
+  min-width: 60px;
+  text-align: right;
+  font-weight: 600;
+  color: var(--text-accent);
+  font-size: 14px;
+}
+
+.setting-description {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Radio Group */
+.radio-group {
+  display: flex;
+  gap: 24px;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.radio-label input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--highlight);
+}
+
+.radio-label span {
+  user-select: none;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 26px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--bg-accent);
+  transition: 0.3s;
+  border-radius: 26px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: var(--highlight);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(24px);
+}
+
+.toggle-slider:hover {
+  box-shadow: 0 0 0 4px rgba(0, 122, 204, 0.1);
+}
+
+/* Modal Footer */
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  margin-top: 20px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-primary {
+  background-color: var(--highlight);
+  color: white;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #005a9e;
+}
+
+/* Git Panel Styles */
+.git-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+  overflow-y: auto;
+  gap: 16px;
+}
+
+.git-panel-empty,
+.git-panel-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+  gap: 12px;
+}
+
+.git-panel-empty i,
+.git-panel-loading i {
+  font-size: 48px;
+  color: var(--text-secondary);
+}
+
+.git-branch-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background-color: var(--bg-secondary);
+  border-radius: 6px;
+  border-left: 3px solid var(--highlight);
+}
+
+.git-branch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.git-branch i {
+  color: var(--highlight);
+}
+
+.git-sync-info {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.git-ahead {
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.git-behind {
+  color: var(--warning);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.git-error {
+  padding: 12px;
+  background-color: rgba(244, 71, 71, 0.1);
+  border: 1px solid var(--error);
+  border-radius: 4px;
+  color: var(--error);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.git-changes-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.git-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.git-section-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.git-section-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.git-action-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.git-action-btn:hover:not(:disabled) {
+  background-color: var(--bg-accent);
+}
+
+.git-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.git-no-changes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  color: var(--text-secondary);
+  gap: 8px;
+}
+
+.git-no-changes i {
+  font-size: 32px;
+  color: var(--success);
+}
+
+.git-changes-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.git-change-item {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  margin: 2px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  gap: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.git-change-item:hover {
+  background-color: var(--bg-accent);
+}
+
+.git-change-item.staged {
+  background-color: rgba(0, 122, 204, 0.1);
+  border-left: 3px solid var(--highlight);
+}
+
+.git-file-checkbox {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--highlight);
+}
+
+.git-icon-modified {
+  color: var(--warning);
+}
+
+.git-icon-added {
+  color: var(--success);
+}
+
+.git-icon-deleted {
+  color: var(--error);
+}
+
+.git-icon-untracked {
+  color: var(--purple);
+}
+
+.git-file-path {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.git-file-status {
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-family: monospace;
+}
+
+.git-status-modified {
+  color: var(--warning);
+  background-color: rgba(220, 220, 170, 0.2);
+}
+
+.git-status-added {
+  color: var(--success);
+  background-color: rgba(76, 201, 176, 0.2);
+}
+
+.git-status-deleted {
+  color: var(--error);
+  background-color: rgba(244, 71, 71, 0.2);
+}
+
+.git-status-untracked {
+  color: var(--purple);
+  background-color: rgba(197, 134, 192, 0.2);
+}
+
+.git-commit-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.git-commit-message {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.git-commit-message:focus {
+  outline: none;
+  border-color: var(--highlight);
+}
+
+.git-commit-message:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.git-commit-btn {
+  width: 100%;
+  padding: 10px;
+  background-color: var(--success);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.git-commit-btn:hover:not(:disabled) {
+  background-color: #3aa07e;
+}
+
+.git-commit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.git-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.git-action-btn-block {
+  padding: 10px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.git-action-btn-block:hover:not(:disabled) {
+  background-color: var(--bg-accent);
+  border-color: var(--highlight);
+}
+
+.git-action-btn-block:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* =========================================
+   Monaco Editor Container Styles
+   ========================================= */
+.monaco-editor-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Critical for nested flex scrolling */
+  overflow: hidden;
+  position: relative;
+  background-color: var(--bg-primary); /* Ensure bg matches theme */
+  padding-top: 1px; /* Tiny buffer to prevent top edge clipping */
+}
+
+/* 
+   Reset global styles that break Monaco 
+   Monaco uses 'content-box' for sizing. Global 'border-box' breaks alignment.
+*/
+.monaco-wrapper .monaco-editor,
+.monaco-wrapper .monaco-editor * {
+  box-sizing: content-box !important;
+}
+
+/* Ensure no global line-height interferes */
+.monaco-wrapper .monaco-editor .view-lines {
+  line-height: normal !important;
+}
+
+/* Force font consistency */
+.monaco-editor, .monaco-editor .inputarea, .monaco-editor .view-lines, .monaco-editor .line-numbers {
+  font-family: 'Fira Code', Consolas, monospace !important;
 }

@@ -87,7 +87,8 @@ const FileExplorer = ({ currentRepository, onFileSelect, selectedFile, refreshTr
         size: file.file_size,
         icon: getFileIcon(file.file_extension, file.file_type),
         color: getFileColor(file.file_extension, file.file_type),
-        selected: selectedFile?.path === file.file_path
+        selected: selectedFile?.path === file.file_path,
+        gitStatus: file.git_status || null // Git status from backend
       };
       currentLevel.push(fileItem);
     });
@@ -284,6 +285,23 @@ const FileExplorer = ({ currentRepository, onFileSelect, selectedFile, refreshTr
 
   const currentFileTree = updateTreeExpanded(files);
 
+  const getGitStatusIcon = (status) => {
+    switch (status) {
+      case 'modified':
+        return 'M';
+      case 'added':
+        return 'A';
+      case 'deleted':
+        return 'D';
+      case 'renamed':
+        return 'R';
+      case 'untracked':
+        return 'U';
+      default:
+        return null;
+    }
+  };
+
   const renderFileItem = (item, level = 0) => {
     const marginLeft = level * 20;
     
@@ -309,10 +327,13 @@ const FileExplorer = ({ currentRepository, onFileSelect, selectedFile, refreshTr
         </React.Fragment>
       );
     } else {
+      const gitStatusClass = item.gitStatus ? `git-${item.gitStatus}` : '';
+      const gitStatusIcon = getGitStatusIcon(item.gitStatus);
+      
       return (
         <li 
           key={item.path || item.name}
-          className={`file-item ${item.selected ? 'selected' : ''}`}
+          className={`file-item ${item.selected ? 'selected' : ''} ${gitStatusClass}`}
           style={{ marginLeft }}
           onClick={() => handleFileClick(item)}
           onContextMenu={(e) => handleContextMenu(e, item)}
@@ -320,6 +341,11 @@ const FileExplorer = ({ currentRepository, onFileSelect, selectedFile, refreshTr
           <span className="folder-toggle"></span>
           <i className={item.icon} style={{ color: item.color }}></i>
           <span>{item.name}</span>
+          {gitStatusIcon && (
+            <span className="git-status-indicator" title={`Git: ${item.gitStatus}`}>
+              {gitStatusIcon}
+            </span>
+          )}
           {item.size && (
             <span className="file-size" title={`${item.size} bytes`}>
               {formatFileSize(item.size)}
@@ -402,14 +428,14 @@ const FileExplorer = ({ currentRepository, onFileSelect, selectedFile, refreshTr
         
         {!loading && !error && (
           <>
-            <div className="repo-actions">
+        <div className="repo-actions">
               <button className="repo-action-btn" onClick={() => handleCreateFile()}>
-                <i className="fas fa-plus"></i> New File
-              </button>
+            <i className="fas fa-plus"></i> New File
+          </button>
               <button className="repo-action-btn" onClick={() => handleCreateFolder()}>
-                <i className="fas fa-folder-plus"></i> New Folder
-              </button>
-            </div>
+            <i className="fas fa-folder-plus"></i> New Folder
+          </button>
+        </div>
 
             {currentFileTree.length === 0 ? (
               <div className="empty-state">
@@ -420,9 +446,9 @@ const FileExplorer = ({ currentRepository, onFileSelect, selectedFile, refreshTr
                 </button>
               </div>
             ) : (
-              <ul className="file-tree">
+        <ul className="file-tree">
                 {currentFileTree.map(item => renderFileItem(item))}
-              </ul>
+        </ul>
             )}
           </>
         )}

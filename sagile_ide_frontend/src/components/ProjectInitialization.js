@@ -32,38 +32,38 @@ const ProjectInitialization = ({
         console.error('Error loading templates:', error);
         // Fallback to static templates if backend fails
         setAvailableTemplates([
-          {
+    {
             id: 'react_frontend',
-            name: 'React Application',
-            description: 'Modern React app with TypeScript and Vite',
-            icon: 'fab fa-react',
-            color: 'var(--info)',
-            features: ['TypeScript', 'Vite', 'ESLint', 'Prettier']
-          },
-          {
+      name: 'React Application',
+      description: 'Modern React app with TypeScript and Vite',
+      icon: 'fab fa-react',
+      color: 'var(--info)',
+      features: ['TypeScript', 'Vite', 'ESLint', 'Prettier']
+    },
+    {
             id: 'node_backend',
-            name: 'Node.js API',
-            description: 'Express.js REST API with TypeScript',
-            icon: 'fab fa-node-js',
-            color: 'var(--success)',
-            features: ['Express.js', 'TypeScript', 'Jest', 'Swagger']
-          },
-          {
+      name: 'Node.js API',
+      description: 'Express.js REST API with TypeScript',
+      icon: 'fab fa-node-js',
+      color: 'var(--success)',
+      features: ['Express.js', 'TypeScript', 'Jest', 'Swagger']
+    },
+    {
             id: 'python_flask',
             name: 'Python Flask App',
             description: 'Flask web application with SQLAlchemy',
-            icon: 'fab fa-python',
-            color: 'var(--info)',
-            features: ['Flask', 'SQLAlchemy', 'Jinja2', 'Pytest']
-          },
-          {
+      icon: 'fab fa-python',
+      color: 'var(--info)',
+      features: ['Flask', 'SQLAlchemy', 'Jinja2', 'Pytest']
+    },
+    {
             id: 'basic_html',
             name: 'Basic HTML',
             description: 'Simple HTML/CSS/JS project',
             icon: 'fab fa-html5',
             color: 'var(--warning)',
             features: ['HTML5', 'CSS3', 'JavaScript']
-          }
+    }
         ]);
       } finally {
         setLoadingTemplates(false);
@@ -224,29 +224,29 @@ const ProjectInitialization = ({
                 <p>Loading templates...</p>
               </div>
             ) : (
-              <div className="template-grid">
+            <div className="template-grid">
                 {availableTemplates.map(template => (
                   <div 
                     key={template.id} 
                     className={`template-card ${selectedTemplate?.id === template.id ? 'selected' : ''}`}
                     onClick={() => handleTemplateSelect(template)}
                   >
-                    <div className="template-header">
+                  <div className="template-header">
                       <i className={template.icon || 'fas fa-code'} style={{color: template.color || 'var(--primary)'}}></i>
-                      <h4 className="template-name">{template.name}</h4>
+                    <h4 className="template-name">{template.name}</h4>
                       {selectedTemplate?.id === template.id && (
                         <i className="fas fa-check-circle selected-icon"></i>
                       )}
-                    </div>
-                    <p className="template-description">{template.description}</p>
-                    <div className="template-features">
-                      {(template.features || []).map((feature, index) => (
-                        <span key={index} className="feature-tag">{feature}</span>
-                      ))}
-                    </div>
                   </div>
-                ))}
-              </div>
+                  <p className="template-description">{template.description}</p>
+                  <div className="template-features">
+                      {(template.features || []).map((feature, index) => (
+                      <span key={index} className="feature-tag">{feature}</span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
             )}
             
             {selectedTemplate && (

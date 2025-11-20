@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { repositoriesAPI } from '../services/api';
-import CodeEditor from './CodeEditor';
+import MonacoCodeEditor from './MonacoCodeEditor';
+import { useSettings } from '../context/SettingsContext';
 
 const Editor = ({ onCodeSelection, selectedTask, selectedFile, currentRepository, onFileContentUpdated }) => {
+  const { settings } = useSettings();
   const [openTabs, setOpenTabs] = useState([]);
   const [activeTab, setActiveTab] = useState(null);
   const [selectedText, setSelectedText] = useState('');
@@ -88,7 +90,7 @@ const Editor = ({ onCodeSelection, selectedTask, selectedFile, currentRepository
 
   const closeTab = (tabPath, event) => {
     event.stopPropagation();
-    
+
     // Check for unsaved changes
     if (unsavedChanges[tabPath]) {
       if (!window.confirm('You have unsaved changes. Are you sure you want to close this file?')) {
@@ -139,15 +141,15 @@ const Editor = ({ onCodeSelection, selectedTask, selectedFile, currentRepository
     setOpenTabs(prev => prev.map(tab => 
       tab.path === activeTab ? { ...tab, modified: hasChanges } : tab
     ));
-
-    // Auto-save after 2 seconds of inactivity
+  
+    // Auto-save after configured delay
     if (hasChanges) {
       clearTimeout(autoSaveTimeoutRef.current);
       const currentFilePath = activeTab;
       const currentContent = content; // Capture the content at this moment
       autoSaveTimeoutRef.current = setTimeout(() => {
         autoSaveFileWithContent(currentFilePath, currentContent);
-      }, 2000);
+      }, settings.autoSaveDelay);
     }
   };
 
@@ -203,6 +205,30 @@ const Editor = ({ onCodeSelection, selectedTask, selectedFile, currentRepository
     }
   };
 
+
+  // Listen for Monaco's save event (Ctrl+S)
+  useEffect(() => {
+    const handleMonacoSave = () => {
+      if (activeTab) {
+        saveFile(activeTab);
+      }
+    };
+
+    const handleMonacoSelection = (e) => {
+      if (e.detail && onCodeSelection) {
+        setSelectedText(e.detail);
+        onCodeSelection(e.detail);
+      }
+    };
+
+    window.addEventListener('monaco-save', handleMonacoSave);
+    window.addEventListener('monaco-selection', handleMonacoSelection);
+    
+    return () => {
+      window.removeEventListener('monaco-save', handleMonacoSave);
+      window.removeEventListener('monaco-selection', handleMonacoSelection);
+    };
+  }, [activeTab, fileContents, onCodeSelection]);
 
   const saveFile = async (filePath = activeTab) => {
     if (!filePath || !currentRepository) return;
@@ -260,7 +286,7 @@ const Editor = ({ onCodeSelection, selectedTask, selectedFile, currentRepository
     const modifiedFiles = Object.keys(unsavedChanges).filter(path => unsavedChanges[path]);
     for (const filePath of modifiedFiles) {
       await saveFile(filePath);
-    }
+  }
   };
 
   const getCurrentFileContent = () => {
@@ -284,7 +310,7 @@ const Editor = ({ onCodeSelection, selectedTask, selectedFile, currentRepository
     }
     if (status === 'error') {
       return <span className="save-status error"><i className="fas fa-exclamation-triangle"></i> Save failed</span>;
-    }
+  }
     if (hasUnsavedChanges) {
       return <span className="save-status unsaved">● Unsaved changes</span>;
     }
@@ -443,16 +469,16 @@ const Editor = ({ onCodeSelection, selectedTask, selectedFile, currentRepository
           <div className="code-link-indicator" title={`Linked to ${selectedTask}`}></div>
         )}
 
-        <CodeEditor
-          value={getCurrentFileContent()}
-          onChange={handleContentChange}
-          onMouseUp={handleCodeSelection}
-          onKeyUp={handleCodeSelection}
-          language={getLanguageFromPath(activeTab)}
-          placeholder={activeTab ? "Start coding..." : "Select a file to edit"}
-          disabled={!activeTab}
-          className="code-editor"
-        />
+        {/* Monaco Editor Container - takes remaining space */}
+        <div className="monaco-editor-wrapper">
+          <MonacoCodeEditor
+            value={getCurrentFileContent()}
+            onChange={handleContentChange}
+            language={getLanguageFromPath(activeTab)}
+            disabled={!activeTab}
+            className="monaco-code-editor"
+          />
+        </div>
       </div>
     </main>
   );

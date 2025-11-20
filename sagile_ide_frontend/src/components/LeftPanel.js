@@ -1,6 +1,7 @@
 import React from 'react';
 import FileExplorer from './FileExplorer';
 import TasksPanel from './TasksPanel';
+import GitPanel from './GitPanel';
 
 const LeftPanel = ({ activePanel, selectedTask, onTaskSelect, selectedCode, currentRepository, onFileSelect, selectedFile, refreshTrigger }) => {
   return (
@@ -45,8 +46,8 @@ const LeftPanel = ({ activePanel, selectedTask, onTaskSelect, selectedCode, curr
           <div className="panel-header">
             <span><i className="fas fa-code-branch"></i> VERSION CONTROL</span>
           </div>
-          <div className="panel-content">
-            <p>Version control coming soon...</p>
+          <div className="panel-content" style={{ padding: 0, overflow: 'hidden' }}>
+            <GitPanel currentRepository={currentRepository} />
           </div>
         </div>
       )}

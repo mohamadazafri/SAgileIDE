@@ -40,14 +40,14 @@ const AccessControl = ({ onAccessChange, selectedProject }) => {
       console.error('Error fetching team members:', error);
       // Fallback to mock data
       setTeamMembers([
-        {
-          id: 'pm',
-          name: 'You (Project Manager)',
-          role: 'Project Manager',
-          icon: 'fas fa-user-tie',
-          avatar: 'PM',
-          color: 'var(--success)',
-          hasAccess: true,
+    {
+      id: 'pm',
+      name: 'You (Project Manager)',
+      role: 'Project Manager',
+      icon: 'fas fa-user-tie',
+      avatar: 'PM',
+      color: 'var(--success)',
+      hasAccess: true,
           disabled: true
         }
       ]);
@@ -195,40 +195,40 @@ const AccessControl = ({ onAccessChange, selectedProject }) => {
       {/* Team Members */}
       <div className="team-members-section">
         <div className="team-members-title">Team Members:</div>
-        {teamMembers.map(member => (
-          <div key={member.id} className="team-member">
-            <div className="member-info">
-              <div 
-                className="member-avatar"
-                style={{ backgroundColor: member.color }}
-              >
-                {member.avatar}
-              </div>
-              <div className="member-details">
-                <div className="member-name">{member.name}</div>
-                <div className="member-role">
-                  <i className={member.icon}></i>
-                  {member.role}
-                </div>
-              </div>
+      {teamMembers.map(member => (
+        <div key={member.id} className="team-member">
+          <div className="member-info">
+            <div 
+              className="member-avatar"
+              style={{ backgroundColor: member.color }}
+            >
+              {member.avatar}
             </div>
-            <div className="permission-controls">
-              {!member.disabled && (
-                <input 
-                  type="checkbox" 
-                  className="access-checkbox"
-                  checked={member.hasAccess}
-                  onChange={(e) => handleAccessChange(member.id, e.target.checked)}
-                />
-              )}
-              {member.disabled && (
-                <div className="permission-level full-access">
-                  Full Access
-                </div>
-              )}
+            <div className="member-details">
+              <div className="member-name">{member.name}</div>
+              <div className="member-role">
+                <i className={member.icon}></i>
+                {member.role}
+              </div>
             </div>
           </div>
-        ))}
+          <div className="permission-controls">
+            {!member.disabled && (
+              <input 
+                type="checkbox" 
+                className="access-checkbox"
+                checked={member.hasAccess}
+                onChange={(e) => handleAccessChange(member.id, e.target.checked)}
+              />
+            )}
+            {member.disabled && (
+              <div className="permission-level full-access">
+                Full Access
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
       </div>
 
       <div className="access-summary">
