@@ -1,86 +1,34 @@
-import React, { useRef, useEffect } from 'react';
-import Editor from '@monaco-editor/react';
-import { useSettings } from '../context/SettingsContext';
-import { useTheme } from '../context/ThemeContext';
-
-// Removed manual loader config to allow default behavior
-
+import React from 'react';
+import EditorComponent from './EditorComponent';
 
 const MonacoCodeEditor = ({ 
   value, 
   onChange, 
   language, 
   disabled,
-  className = ''
+  className = '',
+  // New props
+  projectId,
+  filePath
 }) => {
-  const { settings } = useSettings();
-  const { theme } = useTheme();
-  const editorRef = useRef(null);
-  const monacoRef = useRef(null);
-
-  const getMonacoLanguage = (lang) => {
-    const map = {
-      'js': 'javascript', 'jsx': 'javascript', 'ts': 'typescript', 'tsx': 'typescript',
-      'py': 'python', 'rb': 'ruby', 'cs': 'csharp', 'go': 'go', 'java': 'java',
-      'html': 'html', 'css': 'css', 'json': 'json', 'md': 'markdown', 'sql': 'sql'
-    };
-    return map[lang?.toLowerCase()] || lang || 'plaintext';
-  };
-
-  const handleEditorDidMount = (editor, monaco) => {
-    editorRef.current = editor;
-    monacoRef.current = monaco;
-
-    // Custom keybinding for Save (Ctrl+S / Cmd+S)
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-      window.dispatchEvent(new CustomEvent('monaco-save'));
-    });
-
-    // Selection change listener
-    editor.onDidChangeCursorSelection((e) => {
-      const selection = editor.getModel()?.getValueInRange(e.selection);
-      if (selection) {
-        window.dispatchEvent(new CustomEvent('monaco-selection', { detail: selection }));
-      }
-    });
-  };
-
-  const handleEditorChange = (newValue) => {
-    if (onChange) onChange(newValue);
-  };
-
-  // Prepare options - Minimal and Clean
-  const options = {
-    readOnly: disabled,
-    fontSize: settings.fontSize || 14,
-    lineHeight: 0, // Force integer line height (1.5 * 14)
-    tabSize: settings.tabSize || 2,
-    wordWrap: settings.wordWrap ? 'on' : 'off',
-    minimap: { enabled: false },
-    automaticLayout: true,
-    scrollBeyondLastLine: false,
-    lineNumbers: 'on',
-    glyphMargin: false,
-    folding: true,
-    fontFamily: "'Fira Code', Consolas, monospace",
-    fontLigatures: true,
-    padding: { top: 10, bottom: 10 }, 
-  };
+  // We use the new real-time EditorComponent instead of the old local one.
+  // Note: The parent component (Editor.js) currently manages file content state (fileContents)
+  // and saves via HTTP. With Yjs, content is synced automatically via WebSocket.
+  // We might need to adjust how the parent handles saves to avoid conflicts, or let Yjs handle persistence entirely.
+  // For now, we'll render the new component.
+  
+  if (!projectId || !filePath) {
+      // Fallback or loading state if props aren't ready
+      return <div className="editor-loading">Initializing Editor...</div>;
+  }
 
   return (
-    <div className={`monaco-wrapper ${className}`} style={{ height: '100%', width: '100%', overflow: 'hidden' }}>
-      <Editor
-        height="100%"
-        width="100%"
-        language={getMonacoLanguage(language)}
-        value={value || ''}
-        theme={theme === 'dark' ? 'vs-dark' : 'light'}
-        options={options}
-        onChange={handleEditorChange}
-        onMount={handleEditorDidMount}
-        loading={<div style={{padding: '20px'}}>Loading Editor...</div>}
-      />
-    </div>
+    <EditorComponent
+      projectId={projectId}
+      filePath={filePath}
+      language={language}
+      className={className}
+    />
   );
 };
 

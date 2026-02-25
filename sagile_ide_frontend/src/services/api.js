@@ -108,6 +108,18 @@ export const projectsAPI = {
   searchProjects: async (query) => {
     return apiRequest(`/projects/search/?q=${encodeURIComponent(query)}`);
   },
+
+  // Git Integration
+  getGitStatus: async (projectId) => {
+    return apiRequest(`/projects/${projectId}/git/status/`);
+  },
+
+  commitChanges: async (projectId, commitMessage) => {
+    return apiRequest(`/projects/${projectId}/git/commit/`, {
+      method: 'POST',
+      body: JSON.stringify({ commit_message: commitMessage }),
+    });
+  },
 };
 
 // Repositories API

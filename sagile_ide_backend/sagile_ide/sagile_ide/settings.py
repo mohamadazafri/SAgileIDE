@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -39,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'channels',
     'django_mongoengine',
     'users',
     'projects',
@@ -75,6 +77,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'sagile_ide.wsgi.application'
+ASGI_APPLICATION = 'sagile_ide.asgi.application'
 
 
 # Database
@@ -179,3 +182,10 @@ CORS_ALLOW_CREDENTIALS = True
 
 # Allow all headers and methods for development
 CORS_ALLOW_ALL_ORIGINS = True  # Only for development - change in production
+
+# Channels Configuration
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}

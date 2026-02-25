@@ -19,4 +19,8 @@ urlpatterns = [
     path('<str:project_id>/members/<str:pk>/', views.project_membership_detail_view, name='project_member_detail'),
     path('<str:project_id>/add-member/', views.add_project_member_view, name='add_project_member'),
     path('<str:project_id>/remove-member/<str:user_id>/', views.remove_project_member_view, name='remove_project_member'),
+
+    # Git Integration
+    path('<str:project_id>/git/commit/', views.git_commit_view, name='git_commit'),
+    path('<str:project_id>/git/status/', views.git_status_view, name='git_status'),
 ]

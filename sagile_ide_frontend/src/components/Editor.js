@@ -477,6 +477,8 @@ const Editor = ({ onCodeSelection, selectedTask, selectedFile, currentRepository
             language={getLanguageFromPath(activeTab)}
             disabled={!activeTab}
             className="monaco-code-editor"
+            projectId={currentRepository?.project_id}
+            filePath={activeTab}
           />
         </div>
       </div>

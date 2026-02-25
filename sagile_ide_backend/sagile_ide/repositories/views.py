@@ -1,4 +1,6 @@
-import pdb
+import os
+import subprocess
+from django.conf import settings
 from rest_framework import status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -100,6 +102,20 @@ def repository_list_view(request):
                 created_by=user_id,
                 created_by_username=user.username
             )
+            
+            # Initialize git repository
+            base_storage = settings.BASE_DIR / 'projects_storage'
+            repo_path = base_storage / str(project_id)
+            
+            os.makedirs(repo_path, exist_ok=True)
+            if not (repo_path / '.git').exists():
+                subprocess.run(['git', 'init'], cwd=repo_path, check=True)
+                subprocess.run(['git', 'config', 'user.email', 'sagile@example.com'], cwd=repo_path, check=True)
+                subprocess.run(['git', 'config', 'user.name', 'SAgile IDE'], cwd=repo_path, check=True)
+            
+            repository.root_path = str(repo_path)
+            repository.is_initialized = True
+            
             repository.save()
             
             # Apply template if provided

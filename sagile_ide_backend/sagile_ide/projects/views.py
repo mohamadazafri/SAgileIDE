@@ -1,4 +1,6 @@
 import pdb
+import subprocess
+import os
 from rest_framework import status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -6,6 +8,7 @@ from django.db.models import Q
 from bson import ObjectId
 from .models import Project, ProjectMembership
 from users.models import User
+from repositories.models import Repository
 
 
 # ============================================================================
@@ -499,5 +502,112 @@ def remove_project_member_view(request, project_id, user_id):
             {'error': 'Project not found'},
             status=status.HTTP_404_NOT_FOUND
         )
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ============================================================================
+# GIT INTEGRATION VIEWS
+# ============================================================================
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def git_commit_view(request, project_id):
+    """View for committing changes to git"""
+    try:
+        # Find repository/project path
+        repo = Repository.objects.filter(project_id=ObjectId(project_id)).first()
+        
+        if not repo or not repo.root_path:
+             return Response({'error': 'Repository not found or path missing'}, status=status.HTTP_404_NOT_FOUND)
+             
+        commit_message = request.data.get('commit_message')
+        if not commit_message:
+             return Response({'error': 'Commit message is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Run git add .
+        subprocess.run(['git', 'add', '.'], cwd=repo.root_path, check=True)
+        
+        # Run git commit
+        # Configure user identity temporarily for this commit if needed, or rely on global config
+        # Assuming global config is set or not strictly required for this specific environment task
+        subprocess.run(['git', 'commit', '-m', commit_message], cwd=repo.root_path, check=True)
+        
+        return Response({'message': 'Changes committed successfully'})
+        
+    except subprocess.CalledProcessError as e:
+        return Response({'error': f'Git command failed: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+from django.conf import settings
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def git_status_view(request, project_id):
+    """View for getting git status"""
+    try:
+        # Find repository/project path
+        repo = Repository.objects.filter(project_id=ObjectId(project_id)).first()
+        
+        if not repo:
+             return Response({'error': 'Repository not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Self-healing: Initialize repository if root_path is missing
+        if not repo.root_path:
+            base_storage = settings.BASE_DIR / 'projects_storage'
+            repo_path = base_storage / str(project_id)
+            
+            # Create directory
+            os.makedirs(repo_path, exist_ok=True)
+            
+            # Init git
+            if not (repo_path / '.git').exists():
+                subprocess.run(['git', 'init'], cwd=repo_path, check=True)
+                # Configure user for this repo
+                subprocess.run(['git', 'config', 'user.email', 'sagile@example.com'], cwd=repo_path, check=True)
+                subprocess.run(['git', 'config', 'user.name', 'SAgile IDE'], cwd=repo_path, check=True)
+
+            repo.root_path = str(repo_path)
+            repo.save()
+            
+        # Verify path exists
+        if not os.path.exists(repo.root_path):
+             os.makedirs(repo.root_path, exist_ok=True)
+             subprocess.run(['git', 'init'], cwd=repo.root_path, check=True)
+             subprocess.run(['git', 'config', 'user.email', 'sagile@example.com'], cwd=repo.root_path, check=True)
+             subprocess.run(['git', 'config', 'user.name', 'SAgile IDE'], cwd=repo.root_path, check=True)
+
+        # Run git status --porcelain
+        result = subprocess.run(['git', 'status', '--porcelain'], cwd=repo.root_path, capture_output=True, text=True, check=True)
+        
+        status_lines = result.stdout.strip().split('\n') if result.stdout else []
+        modified = []
+        untracked = []
+        
+        for line in status_lines:
+            if not line.strip(): continue
+            code = line[:2]
+            path = line[3:]
+            
+            if '??' in code:
+                untracked.append({'path': path, 'status': 'untracked'})
+            else:
+                modified.append({'path': path, 'status': 'modified'})
+
+        # Get branch name
+        branch_res = subprocess.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=repo.root_path, capture_output=True, text=True)
+        branch = branch_res.stdout.strip() if branch_res.returncode == 0 else 'main'
+
+        return Response({
+            'branch': branch,
+            'modified': modified,
+            'untracked': untracked,
+            'ahead': 0, # Simplify for now
+            'behind': 0
+        })
+        
+    except subprocess.CalledProcessError as e:
+        return Response({'error': f'Git command failed: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

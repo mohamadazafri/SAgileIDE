@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { repositoriesAPI } from '../services/api';
+import { projectsAPI } from '../services/api';
 
 const GitPanel = ({ currentRepository }) => {
   const [gitStatus, setGitStatus] = useState(null);
@@ -8,32 +8,26 @@ const GitPanel = ({ currentRepository }) => {
   const [error, setError] = useState(null);
   const [selectedFiles, setSelectedFiles] = useState(new Set());
 
+  // Using project_id because our API endpoints are structured under projects
+  // Assuming currentRepository contains project_id
+  const projectId = currentRepository?.project_id;
+
   useEffect(() => {
-    if (currentRepository?.id) {
+    if (projectId) {
       loadGitStatus();
     }
-  }, [currentRepository]);
+  }, [projectId]);
 
   const loadGitStatus = async () => {
-    if (!currentRepository?.id) return;
+    if (!projectId) return;
     
     try {
       setLoading(true);
       setError(null);
-      // Mock git status - in real implementation, this would call backend
-      setGitStatus({
-        branch: 'main',
-        ahead: 2,
-        behind: 0,
-        modified: [
-          { path: 'src/App.js', status: 'modified' },
-          { path: 'src/components/Header.js', status: 'modified' },
-        ],
-        staged: [],
-        untracked: [
-          { path: 'src/components/NewComponent.js', status: 'untracked' }
-        ]
-      });
+      
+      const status = await projectsAPI.getGitStatus(projectId);
+      setGitStatus(status);
+      
     } catch (err) {
       setError('Failed to load git status');
       console.error(err);
@@ -75,8 +69,15 @@ const GitPanel = ({ currentRepository }) => {
       setLoading(true);
       setError(null);
       
-      // Mock commit - in real implementation, this would call backend
-      console.log('Committing files:', Array.from(selectedFiles), 'with message:', commitMessage);
+      // In a real implementation with selective staging, we would need to pass
+      // the list of files to the backend. Currently our backend executes 'git add .'
+      // which adds ALL changes.
+      // For this step, we will call the commit endpoint which commits everything added.
+      // NOTE: Our current backend implementation stages everything ("git add .").
+      // To support selective commit, we'd need to update the backend to accept a file list.
+      // For now, we proceed with the existing "commit all" logic or simple logic.
+      
+      await projectsAPI.commitChanges(projectId, commitMessage);
       
       // Reset state after successful commit
       setCommitMessage('');
@@ -261,4 +262,3 @@ const GitPanel = ({ currentRepository }) => {
 };
 
 export default GitPanel;
-
