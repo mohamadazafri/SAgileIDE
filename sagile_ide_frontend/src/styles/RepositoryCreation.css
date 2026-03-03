@@ -1,7 +1,22 @@
 /* Repository Creation Styles */
+
+/* Make .app fill the viewport and stack header + content vertically */
+.app:not(.ide-workspace) {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.repository-creation-page {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0; /* Required for flex children to shrink and scroll correctly */
+}
+
 .main-content {
   padding: 40px;
-  min-height: calc(100vh - 50px);
+  padding-bottom: 60px; /* Extra bottom space so last elements are fully reachable */
 }
 
 .dashboard-header {

@@ -28,8 +28,7 @@ const Login = () => {
       const response = await authAPI.login(formData);
       
       if (response.user) {
-        // Login successful, redirect to repository creation
-        navigate('/create-repository');
+        navigate('/repositories');
       } else {
         setError('Login failed. Please check your credentials.');
       }
