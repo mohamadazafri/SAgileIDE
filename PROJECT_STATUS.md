@@ -29,7 +29,7 @@
 | **Project Management** | Create, view, and manage SAgile projects. Team membership handling. | ✅ **Functional** |
 | **Repository System** | Mapping projects to file system storage. Metadata tracking in MongoDB. | ✅ **Functional** |
 | **Code Editor** | Monaco-based editor with syntax highlighting. | ✅ **Functional** |
-| **Real-Time Collab** | Multi-user editing, cursor presence, debounced saving to disk. | 🟡 **In Progress / Testing** |
+| **Real-Time Collab** | Multi-user editing, cursor presence, debounced saving to disk. | ✅ **Functional** |
 | **Git Integration** | `git status`, `git add`, `git commit` via UI panels. | 🟡 **In Progress / Refinement** |
 | **File Explorer** | Tree view of files. File creation/deletion/renaming. | 🟡 **Partially Implemented** |
 | **Task Board** | Scrum board (ToDo, In Progress, Done) linked to code. | ⚪ **Pending Integration** |
@@ -38,12 +38,12 @@
 
 This checklist ensures all team members (and AI agents) are aligned on the immediate and long-term goals.
 
-### 🔴 Phase 1: Core Collaboration (Current Focus)
+### ✅ Phase 1: Core Collaboration (Complete)
 - [x] **WebSocket Setup:** Configure Django Channels and routing.
 - [x] **CRDT Integration:** Implement `pycrdt` on backend and `yjs` on frontend.
 - [x] **Persistence:** Save in-memory CRDT models to disk (debounced).
-- [ ] **Stability Testing:** Verify handling of disconnects/reconnects.
-- [ ] **Conflict Resolution:** Ensure backend "truth" overrides properly on initial load.
+- [x] **Stability Testing:** Verify handling of disconnects/reconnects.
+- [x] **Conflict Resolution:** Ensure backend "truth" overrides properly on initial load.
 
 ### 🟠 Phase 2: File System & Git
 - [x] **Git Backend:** Views for `status` and `commit`.
@@ -68,6 +68,11 @@ This checklist ensures all team members (and AI agents) are aligned on the immed
 - [ ] **Terminal:** Web-based terminal (xterm.js) for running arbitrary commands.
 - [ ] **Linter/Intellisense:** Language Server Protocol (LSP) connection (Basic support via Monaco).
 - [ ] **Repository Templates:** Enhanced UI for selecting/previewing templates during creation.
+
+### 🔵 Phase 5: Scalability & Infrastructure
+- [ ] **Redis Channel Layer:** Replace `InMemoryChannelLayer` with `channels_redis` to support multiple Daphne workers/processes. Currently, the in-memory layer isolates each process's group memberships, meaning users on different workers cannot receive each other's real-time edits. Switching to Redis as a shared message broker resolves this and enables horizontal scaling.
+    - Install `channels_redis` and run a Redis instance.
+    - Update `CHANNEL_LAYERS` in `settings.py` to use `RedisChannelLayer` pointing to the Redis server URL.
 
 ## 5. Git-Agile Workflow Design (To Be Implemented in Phase 3)
 

@@ -182,7 +182,7 @@ reach the server; after 5 s Daphne closes the socket.  The client fires
 
 ---
 
-### T3 · Server restart while clients are connected
+### T3 · Server restart while clients are connected ✅ PASSED
 
 > Simulates a backend deployment or crash.
 
@@ -202,7 +202,7 @@ reach the server; after 5 s Daphne closes the socket.  The client fires
 
 ---
 
-### T4 · Last-user session eviction and re-entry
+### T4 · Last-user session eviction and re-entry ✅ PASSED
 
 > Verifies that the session cleanup path (users → 0) runs correctly.
 
@@ -215,7 +215,7 @@ reach the server; after 5 s Daphne closes the socket.  The client fires
 
 ---
 
-### T5 · File-switch re-initialisation
+### T5 · File-switch re-initialisation ✅ PASSED
 
 > Verifies that switching tabs in the editor creates a new independent WS session
 > (this was broken before — switching files left the editor detached).
@@ -233,7 +233,7 @@ reach the server; after 5 s Daphne closes the socket.  The client fires
 
 ## Part 2 — Conflict Resolution (backend as source of truth)
 
-### T6 · Fresh client receives full server state
+### T6 · Fresh client receives full server state ✅ PASSED
 
 > Confirms that a new client (empty Y.Doc) gets the backend's content, not a blank editor.
 
@@ -245,9 +245,17 @@ reach the server; after 5 s Daphne closes the socket.  The client fires
 
 **Pass:** fresh client received the full server state via the sync protocol.
 
+#### Observed behaviour during T6
+
+The incognito window showed **"Reconnecting…"** (red) briefly instead of "Syncing…" (amber), then
+`AUTHORITATIVE_CONTENT` appeared correctly without a manual refresh.  This is expected: y-websocket
+fires `status: 'connecting'` before the first handshake completes, which triggers the "Reconnecting…"
+badge; once the WebSocket connects and the sync exchange finishes, the badge disappears.  The core
+result — correct content loaded with no refresh — is identical to the pass criteria.
+
 ---
 
-### T7 · CRDT binary state persists across server restart (no duplication)
+### T7 · CRDT binary state persists across server restart (no duplication) ✅ PASSED
 
 > The most important conflict-resolution test. Without `.ystate` persistence, a server restart
 > followed by a reconnect can cause content to appear **twice** (two separate Yjs histories merged).
@@ -271,7 +279,7 @@ ls sagile_ide_backend/sagile_ide/projects_storage/<project-id>/src/
 
 ---
 
-### T8 · Concurrent connection race condition guard
+### T8 · Concurrent connection race condition guard ✅ PASSED
 
 > Two clients connecting simultaneously to a document that is not yet in memory
 > must not each create their own separate doc (which would diverge immediately).
