@@ -525,13 +525,18 @@ def git_commit_view(request, project_id):
         if not commit_message:
              return Response({'error': 'Commit message is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Run git add .
-        subprocess.run(['git', 'add', '.'], cwd=repo.root_path, check=True)
-        
+        git_dir = os.path.join(repo.root_path, '.git')
+        git_base = ['git', '--git-dir', git_dir, '--work-tree', repo.root_path]
+
+        # Stage only the requested files, or everything if no list is provided
+        files_to_stage = request.data.get('files', [])
+        if files_to_stage:
+            subprocess.run(git_base + ['add', '--'] + list(files_to_stage), cwd=repo.root_path, check=True)
+        else:
+            subprocess.run(git_base + ['add', '.'], cwd=repo.root_path, check=True)
+
         # Run git commit
-        # Configure user identity temporarily for this commit if needed, or rely on global config
-        # Assuming global config is set or not strictly required for this specific environment task
-        subprocess.run(['git', 'commit', '-m', commit_message], cwd=repo.root_path, check=True)
+        subprocess.run(git_base + ['commit', '-m', commit_message], cwd=repo.root_path, check=True)
         
         return Response({'message': 'Changes committed successfully'})
         
@@ -571,15 +576,25 @@ def git_status_view(request, project_id):
             repo.root_path = str(repo_path)
             repo.save()
             
-        # Verify path exists
+        # Verify path exists and has its own git repo initialized.
+        # Without a .git directory here, git would walk up and expose the
+        # parent workspace repo, leaking changes outside projects_storage.
+        git_dir = os.path.join(repo.root_path, '.git')
         if not os.path.exists(repo.root_path):
-             os.makedirs(repo.root_path, exist_ok=True)
-             subprocess.run(['git', 'init'], cwd=repo.root_path, check=True)
-             subprocess.run(['git', 'config', 'user.email', 'sagile@example.com'], cwd=repo.root_path, check=True)
-             subprocess.run(['git', 'config', 'user.name', 'SAgile IDE'], cwd=repo.root_path, check=True)
+            os.makedirs(repo.root_path, exist_ok=True)
+            subprocess.run(['git', 'init'], cwd=repo.root_path, check=True)
+            subprocess.run(['git', 'config', 'user.email', 'sagile@example.com'], cwd=repo.root_path, check=True)
+            subprocess.run(['git', 'config', 'user.name', 'SAgile IDE'], cwd=repo.root_path, check=True)
+        elif not os.path.exists(git_dir):
+            subprocess.run(['git', 'init'], cwd=repo.root_path, check=True)
+            subprocess.run(['git', 'config', 'user.email', 'sagile@example.com'], cwd=repo.root_path, check=True)
+            subprocess.run(['git', 'config', 'user.name', 'SAgile IDE'], cwd=repo.root_path, check=True)
 
-        # Run git status --porcelain
-        result = subprocess.run(['git', 'status', '--porcelain'], cwd=repo.root_path, capture_output=True, text=True, check=True)
+        # Run git status --porcelain scoped strictly to this repo
+        result = subprocess.run(
+            ['git', '--git-dir', git_dir, '--work-tree', repo.root_path, 'status', '--porcelain'],
+            cwd=repo.root_path, capture_output=True, text=True, check=True,
+        )
         
         status_lines = result.stdout.strip().split('\n') if result.stdout else []
         modified = []
@@ -596,7 +611,10 @@ def git_status_view(request, project_id):
                 modified.append({'path': path, 'status': 'modified'})
 
         # Get branch name
-        branch_res = subprocess.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=repo.root_path, capture_output=True, text=True)
+        branch_res = subprocess.run(
+            ['git', '--git-dir', git_dir, '--work-tree', repo.root_path, 'rev-parse', '--abbrev-ref', 'HEAD'],
+            cwd=repo.root_path, capture_output=True, text=True,
+        )
         branch = branch_res.stdout.strip() if branch_res.returncode == 0 else 'main'
 
         return Response({

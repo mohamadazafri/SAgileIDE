@@ -1006,6 +1006,18 @@ h1, h2, h3, h4, h5, h6 {
     background-color: var(--bg-accent);
 }
 
+.folder-item.drag-over {
+    background-color: var(--primary-bg);
+    outline: 1px dashed var(--accent-blue);
+    outline-offset: -2px;
+}
+
+.file-tree.drag-over-root {
+    outline: 1px dashed var(--accent-blue);
+    outline-offset: -2px;
+    border-radius: 4px;
+}
+
 /* File Operations Modal */
 .modal-overlay {
     position: fixed;

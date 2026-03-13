@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 from django.conf import settings
 from rest_framework import status, permissions
@@ -359,7 +360,19 @@ def add_repository_file_view(request, repository_id):
         )
         
         repository.save()
-        
+
+        # Write the actual file to disk so Git can track it
+        if repository.root_path:
+            full_path = os.path.normpath(os.path.join(repository.root_path, file_path))
+            # Guard against path traversal
+            if full_path.startswith(os.path.normpath(repository.root_path)):
+                dir_path = os.path.dirname(full_path)
+                if dir_path:
+                    os.makedirs(dir_path, exist_ok=True)
+                content = request.data.get('content', '')
+                with open(full_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+
         # Return success message with repository info
         return Response({
             'message': 'File added/updated successfully',
@@ -404,7 +417,10 @@ def update_repository_file_view(request, repository_id, file_path):
         
         if not target_file:
             return Response({'error': 'File not found'}, status=status.HTTP_404_NOT_FOUND)
-        
+
+        # Capture old path before any update so we can rename on disk
+        old_file_path = target_file.file_path
+
         # Update file properties
         if 'file_name' in request.data:
             target_file.file_name = request.data['file_name']
@@ -423,7 +439,24 @@ def update_repository_file_view(request, repository_id, file_path):
         target_file.last_modified_by_username = user.username
         
         repository.save()
-        
+
+        # Rename the actual file on disk if the path changed
+        if repository.root_path and old_file_path != target_file.file_path:
+            root = os.path.normpath(repository.root_path)
+            old_full_path = os.path.normpath(os.path.join(root, old_file_path))
+            new_full_path = os.path.normpath(os.path.join(root, target_file.file_path))
+            # Guard against path traversal
+            if old_full_path.startswith(root) and new_full_path.startswith(root):
+                if os.path.exists(old_full_path):
+                    new_dir = os.path.dirname(new_full_path)
+                    if new_dir:
+                        os.makedirs(new_dir, exist_ok=True)
+                    os.rename(old_full_path, new_full_path)
+                    # Also move the CRDT state file used by the real-time editor
+                    old_ystate = old_full_path + '.ystate'
+                    if os.path.exists(old_ystate):
+                        os.rename(old_ystate, new_full_path + '.ystate')
+
         # Return success message
         return Response({
             'message': 'File updated successfully',
@@ -463,19 +496,37 @@ def delete_repository_file_view(request, repository_id, file_path):
         except Project.DoesNotExist:
             return Response({'error': 'Associated project not found'}, status=status.HTTP_404_NOT_FOUND)
         
-        # Find and remove the file
-        file_found = False
-        for i, file in enumerate(repository.files):
-            if file.file_path == file_path:
-                repository.files.pop(i)
-                file_found = True
-                break
-        
-        if not file_found:
+        # Determine whether this is a folder or single-file deletion.
+        # A folder path won't match any individual file exactly; its children
+        # are stored as paths like "folder/child.js" in MongoDB.
+        folder_prefix = file_path.rstrip('/') + '/'
+        files_before = len(repository.files)
+
+        repository.files = [
+            f for f in repository.files
+            if f.file_path != file_path and not f.file_path.startswith(folder_prefix)
+        ]
+
+        if len(repository.files) == files_before:
             return Response({'error': f'File not found: {file_path}'}, status=status.HTTP_404_NOT_FOUND)
-        
+
         repository.save()
-        
+
+        # Remove the corresponding path(s) from disk
+        if repository.root_path:
+            root = os.path.normpath(repository.root_path)
+            full_path = os.path.normpath(os.path.join(root, file_path))
+            # Guard against path traversal
+            if full_path.startswith(root):
+                if os.path.isdir(full_path):
+                    shutil.rmtree(full_path)
+                elif os.path.isfile(full_path):
+                    os.remove(full_path)
+                    # Also remove the CRDT state file used by the real-time editor
+                    ystate_path = full_path + '.ystate'
+                    if os.path.exists(ystate_path):
+                        os.remove(ystate_path)
+
         # HTTP 204 should not have a response body
         return Response(status=status.HTTP_204_NO_CONTENT)
         
@@ -504,7 +555,41 @@ def repository_files_view(request, repository_id):
         except Project.DoesNotExist:
             return Response({'error': 'Associated project not found'}, status=status.HTTP_404_NOT_FOUND)
         
-        # Return all files
+        # Build a per-file git status map from `git status --porcelain`.
+        # Porcelain format: "XY filename" where X=index status, Y=worktree status.
+        # This is best-effort — if git isn't available the files still load.
+        git_status_map = {}
+        if repository.root_path and os.path.exists(repository.root_path):
+            try:
+                result = subprocess.run(
+                    ['git', 'status', '--porcelain'],
+                    cwd=repository.root_path,
+                    capture_output=True,
+                    text=True,
+                )
+                if result.returncode == 0:
+                    for line in result.stdout.splitlines():
+                        if not line.strip():
+                            continue
+                        xy = line[:2]
+                        path = line[3:].strip()
+                        # Rename lines look like "old -> new"; we want the new path
+                        if ' -> ' in path:
+                            path = path.split(' -> ')[1]
+                        if xy == '??':
+                            git_status_map[path] = 'untracked'
+                        elif xy[0] == 'A':
+                            git_status_map[path] = 'added'
+                        elif xy[0] == 'R' or xy[1] == 'R':
+                            git_status_map[path] = 'renamed'
+                        elif xy[0] == 'D' or xy[1] == 'D':
+                            git_status_map[path] = 'deleted'
+                        else:
+                            git_status_map[path] = 'modified'
+            except Exception:
+                pass  # Git status is non-critical; files still load without it
+
+        # Return all files, enriched with live git status
         files_data = []
         for file in repository.files:
             file_data = {
@@ -517,12 +602,90 @@ def repository_files_view(request, repository_id):
                 'last_modified': file.last_modified.isoformat() if file.last_modified else None,
                 'last_modified_by': str(file.last_modified_by) if file.last_modified_by else None,
                 'last_modified_by_username': file.last_modified_by_username,
-                'created_at': file.created_at.isoformat() if file.created_at else None
+                'created_at': file.created_at.isoformat() if file.created_at else None,
+                'git_status': git_status_map.get(file.file_path),
             }
             files_data.append(file_data)
         
         return Response({'files': files_data})
         
+    except Repository.DoesNotExist:
+        return Response({'error': 'Repository not found'}, status=status.HTTP_404_NOT_FOUND)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ============================================================================
+# FILE MOVE VIEW
+# ============================================================================
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def move_repository_file_view(request, repository_id, file_path):
+    """Move a file or folder to a new path within the repository"""
+    try:
+        repository = Repository.objects.get(id=ObjectId(repository_id))
+        user_id = ObjectId(request.user.id)
+        user = User.objects.get(id=user_id)
+
+        try:
+            project = Project.objects.get(id=repository.project_id)
+            if not (user.role in ['project-manager', 'scrum-master'] or project.is_member(user_id)):
+                return Response({'error': 'You do not have permission to move files'}, status=status.HTTP_403_FORBIDDEN)
+        except Project.DoesNotExist:
+            return Response({'error': 'Associated project not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        new_path = request.data.get('new_path', '').strip()
+        if not new_path:
+            return Response({'error': 'new_path is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if new_path == file_path:
+            return Response({'error': 'Source and destination are the same'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Prevent moving a folder into one of its own subfolders
+        if new_path.startswith(file_path.rstrip('/') + '/'):
+            return Response({'error': 'Cannot move a folder into itself'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update MongoDB records for both single-file and folder (prefix) moves
+        folder_prefix = file_path.rstrip('/') + '/'
+        new_folder_prefix = new_path.rstrip('/') + '/'
+        files_affected = 0
+
+        for f in repository.files:
+            if f.file_path == file_path:
+                f.file_path = new_path
+                f.file_name = new_path.split('/')[-1]
+                files_affected += 1
+            elif f.file_path.startswith(folder_prefix):
+                relative = f.file_path[len(folder_prefix):]
+                f.file_path = new_folder_prefix + relative
+                files_affected += 1
+
+        if files_affected == 0:
+            return Response({'error': f'File not found: {file_path}'}, status=status.HTTP_404_NOT_FOUND)
+
+        repository.save()
+
+        # Move the actual path(s) on disk
+        if repository.root_path:
+            root = os.path.normpath(repository.root_path)
+            old_full = os.path.normpath(os.path.join(root, file_path))
+            new_full = os.path.normpath(os.path.join(root, new_path))
+            if old_full.startswith(root) and new_full.startswith(root):
+                if os.path.exists(old_full):
+                    new_dir = os.path.dirname(new_full)
+                    if new_dir:
+                        os.makedirs(new_dir, exist_ok=True)
+                    shutil.move(old_full, new_full)
+                    # Also move the CRDT state file if it exists alongside a file
+                    old_ystate = old_full + '.ystate'
+                    if os.path.isfile(old_ystate):
+                        shutil.move(old_ystate, new_full + '.ystate')
+
+        return Response({'message': 'Moved successfully', 'new_path': new_path})
+
     except Repository.DoesNotExist:
         return Response({'error': 'Repository not found'}, status=status.HTTP_404_NOT_FOUND)
     except User.DoesNotExist:

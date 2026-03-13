@@ -9,6 +9,7 @@ const FileExplorer = ({ currentRepository, onFileSelect, selectedFile, refreshTr
   const [error, setError] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
   const [modal, setModal] = useState({ isOpen: false, operation: null, targetFile: null, parentPath: '' });
+  const [dragOverFolder, setDragOverFolder] = useState(null);
 
   // Load repository files when repository changes or refresh is triggered
   useEffect(() => {
@@ -93,7 +94,20 @@ const FileExplorer = ({ currentRepository, onFileSelect, selectedFile, refreshTr
       currentLevel.push(fileItem);
     });
 
-    return tree;
+    // Sort each level: folders first (alphabetical), then files (alphabetical)
+    const sortTree = (nodes) =>
+      nodes
+        .sort((a, b) => {
+          if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
+          return a.name.localeCompare(b.name);
+        })
+        .map(node =>
+          node.type === 'folder'
+            ? { ...node, children: sortTree(node.children || []) }
+            : node
+        );
+
+    return sortTree(tree);
   };
 
   const getFileIcon = (extension, fileType) => {
@@ -306,19 +320,25 @@ const FileExplorer = ({ currentRepository, onFileSelect, selectedFile, refreshTr
     const marginLeft = level * 20;
     
     if (item.type === 'folder') {
+      const isDragTarget = dragOverFolder === item.path;
       return (
         <React.Fragment key={item.path || item.name}>
-          <li 
-            className="file-item folder-item" 
+          <li
+            className={`file-item folder-item${isDragTarget ? ' drag-over' : ''}`}
             style={{ marginLeft }}
             onClick={() => toggleFolder(item.path)}
             onContextMenu={(e) => handleContextMenu(e, item)}
+            draggable
+            onDragStart={(e) => handleDragStart(e, item)}
+            onDragOver={(e) => handleDragOver(e, item)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, item)}
           >
             <span className="folder-toggle">
               <i className={`fas fa-chevron-${item.expanded ? 'down' : 'right'}`}></i>
             </span>
-            <i 
-              className={`fas fa-folder${item.expanded ? '-open' : ''}`} 
+            <i
+              className={`fas fa-folder${item.expanded ? '-open' : ''}`}
               style={{ color: 'var(--warning)' }}
             ></i>
             <span>{item.name}</span>
@@ -329,14 +349,16 @@ const FileExplorer = ({ currentRepository, onFileSelect, selectedFile, refreshTr
     } else {
       const gitStatusClass = item.gitStatus ? `git-${item.gitStatus}` : '';
       const gitStatusIcon = getGitStatusIcon(item.gitStatus);
-      
+
       return (
-        <li 
+        <li
           key={item.path || item.name}
           className={`file-item ${item.selected ? 'selected' : ''} ${gitStatusClass}`}
           style={{ marginLeft }}
           onClick={() => handleFileClick(item)}
           onContextMenu={(e) => handleContextMenu(e, item)}
+          draggable
+          onDragStart={(e) => handleDragStart(e, item)}
         >
           <span className="folder-toggle"></span>
           <i className={item.icon} style={{ color: item.color }}></i>
@@ -353,6 +375,62 @@ const FileExplorer = ({ currentRepository, onFileSelect, selectedFile, refreshTr
           )}
         </li>
       );
+    }
+  };
+
+  const handleDragStart = (e, item) => {
+    e.dataTransfer.setData('application/json', JSON.stringify({ path: item.path, type: item.type, name: item.name }));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e, item) => {
+    if (item.type !== 'folder') return;
+    e.preventDefault();
+    e.stopPropagation(); // prevent bubbling up to the root <ul> drop zone
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverFolder(item.path);
+  };
+
+  const handleDragLeave = (e) => {
+    // Only clear if leaving the folder element entirely (not entering a child)
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      setDragOverFolder(null);
+    }
+  };
+
+  const handleDrop = async (e, targetFolder) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverFolder(null);
+
+    let dragData;
+    try {
+      dragData = JSON.parse(e.dataTransfer.getData('application/json'));
+    } catch {
+      return;
+    }
+    if (!dragData) return;
+
+    const sourcePath = dragData.path;
+    const targetPath = targetFolder.path;
+
+    // Guard: no-op moves
+    if (sourcePath === targetPath) return;
+    if (targetPath.startsWith(sourcePath + '/')) return; // can't drop folder into its own subfolder
+    const sourceParent = sourcePath.includes('/')
+      ? sourcePath.substring(0, sourcePath.lastIndexOf('/'))
+      : '';
+    if (sourceParent === targetPath) return; // already in this folder
+
+    const sourceName = sourcePath.split('/').pop();
+    const newPath = targetPath ? `${targetPath}/${sourceName}` : sourceName;
+    if (newPath === sourcePath) return;
+
+    try {
+      await repositoriesAPI.moveFile(currentRepository.id, sourcePath, { new_path: newPath });
+      loadRepositoryFiles();
+    } catch (err) {
+      console.error('Failed to move file:', err);
     }
   };
 
@@ -446,7 +524,12 @@ const FileExplorer = ({ currentRepository, onFileSelect, selectedFile, refreshTr
                 </button>
               </div>
             ) : (
-        <ul className="file-tree">
+        <ul
+          className={`file-tree${dragOverFolder === '' ? ' drag-over-root' : ''}`}
+          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverFolder(''); }}
+          onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverFolder(null); }}
+          onDrop={(e) => handleDrop(e, { path: '', type: 'folder', name: 'root' })}
+        >
                 {currentFileTree.map(item => renderFileItem(item))}
         </ul>
             )}

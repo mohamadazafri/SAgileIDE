@@ -74,6 +74,34 @@ This checklist ensures all team members (and AI agents) are aligned on the immed
     - Install `channels_redis` and run a Redis instance.
     - Update `CHANNEL_LAYERS` in `settings.py` to use `RedisChannelLayer` pointing to the Redis server URL.
 
+### ☁️ Phase 6: Cloud Deployment
+> **When to work on this:** After Phase 4 (Polish) is complete and the app is stable enough to demo to real users. Phase 5 (Redis Channel Layer) must be done first, as it is a hard prerequisite for multi-instance WebSocket. This phase is about making the app deployable to a real cloud environment with multiple users and without data loss on restarts.
+>
+> For a deep dive on the storage strategy behind this phase, see [`.cursor/plans/cloud_storage_strategy_836b7418.plan.md`](.cursor/plans/cloud_storage_strategy_836b7418.plan.md). For a beginner-friendly explanation of cloud concepts (EFS, NFS, Kubernetes, pods), see [`.cursor/plans/option_a_explained.md`](.cursor/plans/option_a_explained.md).
+
+#### Config & Secrets
+- [ ] **Centralise storage path:** Add `PROJECTS_STORAGE_PATH` to `settings.py`, read from an environment variable. Replace the two hardcoded `BASE_DIR / 'projects_storage'` occurrences in `repositories/views.py` and `projects/views.py`.
+- [ ] **Environment variables:** Move all hardcoded secrets and connection strings out of `settings.py` into env vars: `SECRET_KEY`, MongoDB URI (host/port/credentials), Redis URI, and `PROJECTS_STORAGE_PATH`.
+- [ ] **Disable dev-only flags:** Set `DEBUG=False`, restrict `ALLOWED_HOSTS`, and tighten `CORS_ALLOW_ALL_ORIGINS` to known frontend origins only.
+
+#### Storage
+- [ ] **Per-user directory prefix:** Change the project storage path structure from `<root>/<project_id>/` to `<root>/<user_id>/<project_id>/`. Update `Repository.root_path` in MongoDB accordingly. This improves isolation and makes per-user backups/quotas possible.
+- [ ] **Provision a persistent shared volume:** Set up AWS EFS (or GCP Filestore / Azure Files) and mount it at the `PROJECTS_STORAGE_PATH` mount point in every container. This replaces the local disk so all app instances share the same project files.
+- [ ] **One-time data migration:** Copy existing `projects_storage/` contents to the new shared volume. Update `Repository.root_path` values in MongoDB to the new mount path.
+
+#### Sessions
+- [ ] **Move Django sessions off SQLite:** Switch to `django.contrib.sessions.backends.cache` backed by Redis (reusing the same Redis instance from Phase 5). This allows multiple app instances to share login state.
+
+#### Containerisation
+- [ ] **Dockerise the Django backend:** Write a `Dockerfile` for `sagile_ide_backend` (Python 3.13, Daphne ASGI server, production settings).
+- [ ] **Dockerise the React frontend:** Write a `Dockerfile` for `sagile_ide_frontend` (multi-stage build: `npm run build` → Nginx to serve static files).
+- [ ] **Write a `docker-compose.yml`** for local multi-container testing (Django + React + MongoDB + Redis).
+
+#### Orchestration (Cloud)
+- [ ] **Kubernetes manifests (or ECS task definitions):** Write deployment configs for the backend and frontend, including the EFS volume mount, env var injection, and `replicas: 2+` for the backend.
+- [ ] **Managed MongoDB:** Switch from a local MongoDB instance to MongoDB Atlas (or a cloud-managed equivalent) with credentials injected via env vars.
+- [ ] **Health checks & resource limits:** Add liveness/readiness probes and CPU/memory limits to the Kubernetes deployment.
+
 ## 5. Git-Agile Workflow Design (To Be Implemented in Phase 3)
 
 This section captures the agreed-upon design for how git and Agile tasks will be linked. Serves as a reference for implementation and for the FYP report.

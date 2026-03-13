@@ -114,10 +114,10 @@ export const projectsAPI = {
     return apiRequest(`/projects/${projectId}/git/status/`);
   },
 
-  commitChanges: async (projectId, commitMessage) => {
+  commitChanges: async (projectId, commitMessage, files = []) => {
     return apiRequest(`/projects/${projectId}/git/commit/`, {
       method: 'POST',
-      body: JSON.stringify({ commit_message: commitMessage }),
+      body: JSON.stringify({ commit_message: commitMessage, files }),
     });
   },
 };
@@ -180,6 +180,14 @@ export const repositoriesAPI = {
   removeFile: async (repositoryId, filePath) => {
     return apiRequest(`/repositories/${repositoryId}/files/${filePath}/delete/`, {
       method: 'DELETE',
+    });
+  },
+
+  // Move file or folder to a new path within the repository
+  moveFile: async (repositoryId, filePath, moveData) => {
+    return apiRequest(`/repositories/${repositoryId}/files/${filePath}/move/`, {
+      method: 'POST',
+      body: JSON.stringify(moveData),
     });
   },
   

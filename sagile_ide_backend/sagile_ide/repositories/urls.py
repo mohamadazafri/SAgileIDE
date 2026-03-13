@@ -18,6 +18,7 @@ urlpatterns = [
     path('<str:repository_id>/add-file/', views.add_repository_file_view, name='add_repository_file'),
     path('<str:repository_id>/files/<path:file_path>/update/', views.update_repository_file_view, name='update_repository_file'),
     path('<str:repository_id>/files/<path:file_path>/delete/', views.delete_repository_file_view, name='delete_repository_file'),
+    path('<str:repository_id>/files/<path:file_path>/move/', views.move_repository_file_view, name='move_repository_file'),
     
     # Repository detail endpoint (must come after specific patterns)
     path('<str:pk>/', views.repository_detail_view, name='repository_detail'),

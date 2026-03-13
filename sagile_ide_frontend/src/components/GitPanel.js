@@ -68,16 +68,8 @@ const GitPanel = ({ currentRepository }) => {
     try {
       setLoading(true);
       setError(null);
-      
-      // In a real implementation with selective staging, we would need to pass
-      // the list of files to the backend. Currently our backend executes 'git add .'
-      // which adds ALL changes.
-      // For this step, we will call the commit endpoint which commits everything added.
-      // NOTE: Our current backend implementation stages everything ("git add .").
-      // To support selective commit, we'd need to update the backend to accept a file list.
-      // For now, we proceed with the existing "commit all" logic or simple logic.
-      
-      await projectsAPI.commitChanges(projectId, commitMessage);
+
+      await projectsAPI.commitChanges(projectId, commitMessage, Array.from(selectedFiles));
       
       // Reset state after successful commit
       setCommitMessage('');
